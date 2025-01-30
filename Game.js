@@ -1,6 +1,6 @@
 // Game.js
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { GameEngine } from 'react-native-game-engine';
 
 const Square = ({ position }) => {
@@ -9,9 +9,14 @@ const Square = ({ position }) => {
   );
 };
 
+const CenterSquare = () => {
+  return <View style={styles.centerSquare} />;
+};
+
 const Game = () => {
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const [direction, setDirection] = React.useState('down');
+  const [isMoving, setIsMoving] = React.useState(false); // New state to control movement
   const speed = 5; // Speed of the square
 
   // Define border dimensions
@@ -58,22 +63,37 @@ const Game = () => {
             break;
         }
 
+        // Check if the square has returned to the original position
+        if (newX === 0 && newY === 0) {
+          setIsMoving(false); // Stop moving when it returns to the original position
+        }
+
         return { x: newX, y: newY };
       });
     };
 
-    const interval = setInterval(update, 16); // ~60 FPS
+    const interval = isMoving ? setInterval(update, 16) : null; // Only update if moving
     return () => clearInterval(interval);
-  }, [direction]);
+  }, [direction, isMoving]);
+
+  const handlePress = () => {
+    if (!isMoving) {
+      setIsMoving(true); // Start moving when the screen is pressed
+      setDirection('down'); // Reset direction to start moving down
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.border}>
-        <GameEngine style={styles.gameContainer}>
-          <Square position={position} />
-        </GameEngine>
+    <TouchableWithoutFeedback onPress={handlePress}>
+      <View style={styles.container}>
+        <View style={styles.border}>
+          <GameEngine style={styles.gameContainer}>
+            <Square position={position} />
+            <CenterSquare /> 
+          </GameEngine>
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -102,6 +122,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'blue',
     position: 'absolute',
   },
+  centerSquare: {
+    width: 20, // Width of the center square
+    height: 20, // Height of the center square
+    backgroundColor: 'red',
+    position: 'absolute',
+    left: (350 - 20) / 2, // Center horizontally
+    top: (740 - 20) / 2, // Center vertically
+  },
 });
 
 export default Game;
+``
